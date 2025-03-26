@@ -1,54 +1,50 @@
 pipeline {
     agent any
+
+    environment {
+        // Define aquí las variables de entorno necesarias
+        // EJEMPLO: PATH_TO_PROJECT = '/ruta/a/tu/proyecto'
+    }
+
     stages {
-        stage('Checkout') {
-            steps {
-                // Obtiene el código fuente del repositorio
-                checkout scm
-            }
-        }
         stage('Build') {
             steps {
-                // Comandos para construir el proyecto
-                sh 'mvn clean install' // Ejemplo para proyectos Maven
+                // Paso para la construcción del proyecto
+                echo 'Construyendo el proyecto...'
+                // Añade aquí los comandos necesarios para construir tu proyecto
+                // EJEMPLO: sh 'mvn clean install'
             }
         }
         stage('Test') {
             steps {
-                // Comandos para ejecutar pruebas unitarias
-                sh 'mvn test' // Ejemplo para proyectos Maven
+                // Paso para ejecutar las pruebas
+                echo 'Ejecutando pruebas...'
+                // Añade aquí los comandos necesarios para ejecutar tus pruebas
+                // EJEMPLO: sh 'mvn test'
             }
         }
-        stage('Deploy to Asignatura Container') {
-            when {
-                branch 'main'
-            }
+        stage('Deploy') {
             steps {
-                // Comandos para desplegar en el contenedor de la asignatura
-                sh 'docker-compose -f docker-compose-asignatura.yml up -d'
-            }
-        }
-        stage('Deploy to Docker Container within Asignatura') {
-            when {
-                branch 'main'
-            }
-            steps {
-                // Comandos para desplegar en un contenedor Docker dentro del contenedor de la asignatura
-                sh 'docker build -t proyecto .'
-                sh 'docker run -d --name proyecto_container proyecto'
+                // Paso para desplegar el proyecto
+                echo 'Desplegando el proyecto...'
+                // Añade aquí los comandos necesarios para desplegar tu proyecto
+                // EJEMPLO: sh 'docker-compose up -d'
             }
         }
     }
-    // Definir las ramas en las que se ejecutarán ciertas etapas
+
     post {
         always {
-            // Acciones que se ejecutan siempre, independientemente de la rama
+            // Acciones que se ejecutan siempre al finalizar el pipeline
+            echo 'Pipeline finalizado.'
         }
         success {
-            // Acciones que se ejecutan solo si el pipeline es exitoso
+            // Acciones que se ejecutan si el pipeline finaliza con éxito
+            echo 'Pipeline completado con éxito.'
         }
         failure {
-            // Acciones que se ejecutan solo si el pipeline falla
+            // Acciones que se ejecutan si el pipeline falla
+            echo 'Pipeline fallido.'
         }
     }
 }
