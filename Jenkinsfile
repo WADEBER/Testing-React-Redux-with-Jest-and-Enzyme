@@ -1,50 +1,41 @@
 pipeline {
     agent any
 
-    environment {
-        // Define aquí las variables de entorno necesarias
-        // EJEMPLO: PATH_TO_PROJECT = '/ruta/a/tu/proyecto'
-    }
-
     stages {
-        stage('Build') {
+        stage('Obtener versiones') {
             steps {
-                // Paso para la construcción del proyecto
-                echo 'Construyendo el proyecto...'
-                // Añade aquí los comandos necesarios para construir tu proyecto
-                // EJEMPLO: sh 'mvn clean install'
+                script {
+                    def timestamp = new Date().format("yyyyMMddHHmmss")
+                    def versionFile = "info_versiones_${timestamp}.txt"
+                    sh "java -version 2>&1 | tee ${versionFile}"
+                    sh "jenkins --version >> ${versionFile}"
+                    archiveArtifacts artifacts: versionFile, fingerprint: true
+                }
             }
         }
-        stage('Test') {
-            steps {
-                // Paso para ejecutar las pruebas
-                echo 'Ejecutando pruebas...'
-                // Añade aquí los comandos necesarios para ejecutar tus pruebas
-                // EJEMPLO: sh 'mvn test'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                // Paso para desplegar el proyecto
-                echo 'Desplegando el proyecto...'
-                // Añade aquí los comandos necesarios para desplegar tu proyecto
-                // EJEMPLO: sh 'docker-compose up -d'
-            }
-        }
-    }
 
-    post {
-        always {
-            // Acciones que se ejecutan siempre al finalizar el pipeline
-            echo 'Pipeline finalizado.'
+        stage('Escanear puertos abiertos') {
+            steps {
+                script {
+                    def timestamp = new Date().format("yyyyMMddHHmmss")
+                    def scanFile = "escaneo_puertos_${timestamp}.txt"
+                    def ip = sh(script: """hostname -I | awk '{print $1}'""", returnStdout: true).trim()
+                    sh "nmap -p- ${ip} > ${scanFile}"
+                    archiveArtifacts artifacts: scanFile, fingerprint: true
+                }
+            }
         }
-        success {
-            // Acciones que se ejecutan si el pipeline finaliza con éxito
-            echo 'Pipeline completado con éxito.'
-        }
-        failure {
-            // Acciones que se ejecutan si el pipeline falla
-            echo 'Pipeline fallido.'
+
+        stage('Generar hashes SHA-256') {
+            steps {
+                script {
+                    def timestamp = new Date().format("yyyyMMddHHmmss")
+                    def hashFile = "verificacion_integridad_${timestamp}.txt"
+                    def targetPath = "/var/lib/jenkins/workspace/Proyecto_Seguridad/ficheros_importantes"
+                    sh "find ${targetPath} -type f -exec sha256sum {} + > ${hashFile}"
+                    archiveArtifacts artifacts: hashFile, fingerprint: true
+                }
+            }
         }
     }
 }
